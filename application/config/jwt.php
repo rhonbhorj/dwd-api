@@ -5,7 +5,7 @@
 | JWT Secure Key
 |--------------------------------------------------------------------------
 */
-$config['jwt_key'] = 'eyJ0eXAiOiJKV1QiLCJhbGciTWtTMjU2IiwnInRpdHRsZSI6IkRXRCJ9'; //local
+$config['jwt_key'] = 'eyJ0eXAiOiJKV1QiLCJhbGciTWtTMjU2IiwnInRpdHRsZSI6IkRXRCJ9 '; //local
 // $config['jwt_key'] = 'eyJ0eXAiOiJKV1QiLCJhbGciTWvLUzI1NiJ9IiRkYXRhIg'; //uat
 // 
 // $config['jwt_key'] = 'eyJ0eXAiOiJKV1QiLCJhbGcibXljb21wYW55In0iJGRhdGE='; //ron
