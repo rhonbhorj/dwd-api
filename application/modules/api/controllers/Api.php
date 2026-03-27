@@ -21,6 +21,17 @@ class Api extends REST_Controller
     }
 
 
+        public function error()
+    {
+                $this->response([
+                    'status' => false,
+                    "status_code"=> 404,
+                    'message' => '404 Page Not Found',
+                    
+                ], Rest_Controller::HTTP_NOT_FOUND);
+
+    }
+
     public function index_get()
     {   
         $bytes = random_bytes(16);

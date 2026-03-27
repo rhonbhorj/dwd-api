@@ -47,45 +47,11 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * | controller and method URI segments.
  * |
  * | Examples: my-controller/index -> my_controller/index
- * | my-controller/my-method -> my_controller/my_method  v1/bsp-payment
+ * | my-controller/my-method -> my_controller/my_method  
  */
 
-$route['404_override'] = 'custom404';
+$route['404_override'] = 'api/error';
 
 $route['default_controller'] = 'api';
 $route['generate-token'] = 'api/generate_token';
-
-$route['v1/council-list'] = 'detail/council_list';
-$route['v1/district-list'] = 'detail/get_district_details';
-$route['v1/sub-district-list'] = 'detail/get_sub_district_details';
-$route['v1/school-list'] = 'detail/get_school';  
-$route['v1/registration-form-list'] = 'detail/registration_form_list';
-
-
-$route['v1/scout-list'] = 'scout/scout_list';
-$route['v1/scout-payment-type'] = 'scout/scout_payment_type';
-$route['v1/scout-payment-description'] = 'scout/scout_payment_description';
-
-///postback
-$route['postback/data'] = 'postback/data';
-
-
-//manage  
-$route['login'] = 'auth/login';
-$route['logout'] = 'auth/logout';
-$route['v1/bsp-transaction'] = 'report/payment_data';
-
-
-$route['v1/bsp-register'] = 'account/register';
-$route['v1/bsp-login'] = 'auth/bsplogin';
-
-
-
-
-//generate Qr
-$route['v1/bsp-payment'] = 'payment/boy_scout';
-$route['transaction-status'] = 'transaction/transaction_status'; 
-
-//bsp v2  bsp-aur-generate
-$route['v1/bsp-form-generate'] = 'generate/form';
-$route['v1/bsp-update-status'] = 'generate/update_form_status';
+$route['v1/payment'] = 'payment/create_qr';
