@@ -23,9 +23,11 @@ class Api extends REST_Controller
 
     public function index_get()
     {   
+        $bytes = random_bytes(16);
 
         $data['status'] = false;
         $data['status_code'] = 403;
+        // $data['message'] =bin2hex($bytes);
         $data['message'] = 'Forbidden';
         $this->response($data, Rest_Controller::HTTP_FORBIDDEN);
     }
@@ -54,16 +56,28 @@ class Api extends REST_Controller
         } else {
 
             $token_data['Access'] = "true";
-            $token_data['aaccount_id'] = $head['company_id'];
-
+            $token_data['account_id'] = $head['company_id'];
+            $token_data['access'] = $head['api_name'];
+             $this->modelrepo->exp_all($head['company_id']);
             $tokenData = $this->authorization_token->generateToken($token_data);
+
+            $insert_token['token']=$tokenData['token'];
+            $insert_token['conpany_id']= $head['company_id'];
+            $insert_token['company_name']= $head['api_name'];
+            $insert_token['date_create']=date("Y-m-d H:i:s",$tokenData['iat']);
+            $insert_token['date_exp']=date("Y-m-d H:i:s",$tokenData['exp']);
+            $insert_token['status']='ACTIVE';
+
+
+            $this->modelrepo->inser_token($insert_token);
 
             $resp = array();
 
             $resp['status'] = true;
             $resp['status_code'] = 201;
             $resp['message'] = "create";
-            $resp['data']['token'] = $tokenData;
+            $resp['data']['token'] = $tokenData['token'];
+            $resp['exp']=date("Y-m-d H:i:s",$tokenData['exp']);
         }
         if ($AVR) {
 
@@ -636,43 +650,7 @@ class Api extends REST_Controller
     }
   
 
-    // pgw/api/v1/auth/obtain-token/
-   ////tobe continue
-    public function obtain_token_post()
-    {
 
-                $this->form_validation->set_rules('username', 'username', 'trim|required');
-                $this->form_validation->set_rules('secret', 'secret', 'trim|required');
-                $this->form_validation->set_rules('app_uuid', 'app_uuid', 'trim|required');
-
-            $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
-
-
-            switch ($contentType) {
-                case 'application/json':
-                    $json = file_get_contents('php://input');
-                    $_POST = json_decode($json, true);
-                    $datapost = $_POST;
-                    break;
-                default:
-                    $datapost = array(
-                        'sess_id' => $this->input->post('sess_id', true)
-                    );
-            }
-
-            if ($this->form_validation->run() == FALSE) {
-                $FVE = $this->form_validation->error_array();
-                $this->response([
-                    'status' => false,
-                    'status_code' => 401,
-                    'message' => 'Error validation',
-                    'errors' => array($FVE)
-                ], Rest_Controller::HTTP_UNAUTHORIZED);
-            } else {
-
-
-             }
-    }
     
 ///////////////////////////
 

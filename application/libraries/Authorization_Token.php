@@ -71,9 +71,11 @@ class Authorization_Token
             $data['iat'] = time(); 
             $data['nbf'] = time();
             $data['exp'] = time()+$this->token_expire_time;
+               $data['token'] = JWT::encode($data, $this->token_key, $this->token_algorithm);
+
 
             try {
-                return JWT::encode($data, $this->token_key, $this->token_algorithm);
+                return $data;
             }
             catch(Exception $e) {
                 return 'Message: ' .$e->getMessage();

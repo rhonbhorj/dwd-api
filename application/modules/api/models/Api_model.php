@@ -22,26 +22,37 @@ class Api_model extends CI_Model
     public function validate_user_access($data)
     {
         $sql = "select * from tbl_users where  user_id ='" .$data['user_id']."'";
-        $Q = $this->db->query($sql);
+        $Q   = $this->db->query($sql);
         return $Q->row_array() ? $Q->row_array() : false;
     }
 
         function chk_access($data)
     {
         if ($data) {
-            $sql = "select * from api_keys ak left join api_users au on ak.id=au.key_id where ak.key like ? and au.api_name like ? and au.api_password like ?";
+                $sql = "select * from api_keys ak left join api_users au on ak.id=au.key_id where ak.key like ? and au.api_name like ? and au.api_password like ?";
        
-            $Q = $this->db->query($sql, array(
-                $data['key'],
-                $data['username'],
-                $data['userpassword']
-            ));
-            return $Q->row_array();
+                $Q   = $this->db->query($sql, array(
+                       $data['key'],
+                       $data['username'],
+                       $data['userpassword']
+                       ));
+                    return $Q->row_array();
         } else {
             return false;
         }
     }
 
-    
+    public function inser_token($data)
+    {
+          return $this->db->insert('client_token', $data);
+    }
 
+    public function exp_all($id)
+    {    
+        
+        $update['status']="INACTIVE";
+        $this->db->where('conpany_id', $id)->update('client_token', $update);
+
+        return true;
+    }
 }
