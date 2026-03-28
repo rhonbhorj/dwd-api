@@ -29,7 +29,13 @@ class Api_model extends CI_Model
         function chk_access($data)
     {
         if ($data) {
-                $sql = "select * from api_keys ak left join api_users au on ak.id=au.key_id where ak.key like ? and au.api_name like ? and au.api_password like ?";
+                $sql = "select id,company_id,status,api_name 
+                        from api_keys ak 
+                        left join api_users au 
+                        on ak.id=au.key_id 
+                        where ak.key like ? 
+                        and au.api_name like ? 
+                        and au.api_password like ?";
        
                 $Q   = $this->db->query($sql, array(
                        $data['key'],
@@ -44,14 +50,14 @@ class Api_model extends CI_Model
 
     public function inser_token($data)
     {
-          return $this->db->insert('client_token', $data);
+          return $this->db->insert('ngsi_token', $data);
     }
 
     public function exp_all($id)
     {    
         
         $update['status']="INACTIVE";
-        $this->db->where('conpany_id', $id)->update('client_token', $update);
+        $this->db->where('company_id', $id)->update('ngsi_token', $update);
 
         return true;
     }

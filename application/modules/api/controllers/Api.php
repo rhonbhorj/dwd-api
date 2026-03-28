@@ -68,12 +68,12 @@ class Api extends REST_Controller
 
             $token_data['Access'] = "true";
             $token_data['account_id'] = $head['company_id'];
-            $token_data['access'] = $head['api_name'];
+            // $token_data['access'] = $head['api_name'];
              $this->modelrepo->exp_all($head['company_id']);
             $tokenData = $this->authorization_token->generateToken($token_data);
 
             $insert_token['token']=$tokenData['token'];
-            $insert_token['conpany_id']= $head['company_id'];
+            $insert_token['company_id']= $head['company_id'];
             $insert_token['company_name']= $head['api_name'];
             $insert_token['date_create']=date("Y-m-d H:i:s",$tokenData['iat']);
             $insert_token['date_exp']=date("Y-m-d H:i:s",$tokenData['exp']);
@@ -87,7 +87,6 @@ class Api extends REST_Controller
             $resp['status'] = true;
             $resp['status_code'] = 201;
             $resp['message'] = "create";
-            
             $resp['data']['token'] = $tokenData['token'];
             $resp['data']['exp']=date("Y-m-d H:i:s",$tokenData['exp']);
             

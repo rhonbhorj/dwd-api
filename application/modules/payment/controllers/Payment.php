@@ -15,9 +15,9 @@ class Payment extends REST_Controller
     {
         parent::__construct();
         date_default_timezone_set('Asia/Manila');
-        $this->load->model('api_model', 'modelrepo');
+        $this->load->model('Payment_model', 'modelrepo');
         
-         $this->DwdApiService = new DwdApiService();
+        $this->DwdApiService = new DwdApiService();
         $this->authorization_token = new Authorization_Token();
     }
 
@@ -45,6 +45,8 @@ class Payment extends REST_Controller
         $today = date('Y-m-d H:i:s');
 
         $head = checkHeader($this);
+
+ 
         $validateToken = $this->authorization_token->validateToken($headers);
         if ($validateToken['status'] == false) {
 
@@ -55,16 +57,26 @@ class Payment extends REST_Controller
             $this->response($result, Rest_Controller::HTTP_FORBIDDEN);
         } elseif ($head['status'] == false) {
 
-            $result['status'] = false;
-            $result['status_code'] = 403;
-            $result['data'] = $head;
-            $this->response($result, Rest_Controller::HTTP_FORBIDDEN);
-        } else {
+            $this->response($head, Rest_Controller::HTTP_FORBIDDEN);
 
-            $result['status'] = true;
-            $result['status_code'] = 201;
-            $result['data'] = $head;
-           
+        } else {
+            $company_id = $head['company_id'];
+            $token      = substr($headers['Authorization'],7);
+            $chk_merchant_token = $this->modelrepo->chk_token($company_id,$token);
+            if($chk_merchant_token){
+                $result['status'] = true;
+                $result['status_code'] = 200;
+                $result['data'] = $head;
+                $result['token'] = $headers;
+
+            }else{
+                $result['status'] = false;
+                $result['status_code'] = 403;
+                $result['message'] = "Invalid token";
+                $this->response($result, Rest_Controller::HTTP_FORBIDDEN);
+
+            }
+
         }
 
         return $result;
@@ -77,74 +89,6 @@ class Payment extends REST_Controller
 
  
 
-    public function get_api_user_post()
-    {
-        $today = date('Y-m-d H:i:s');
-        $AVR = true;
-        $chkAcess = $this->vallidate_access();
-
-        if ($chkAcess['status'] == false) {
-
-            $AVR = $chkAcess['status'];
-            $resp = $chkAcess['data'];
-        } else {
-
-            $this->form_validation->set_rules('sess_id', 'sess_id', 'trim|required');
-
-            $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
-
-            switch ($contentType) {
-                case 'application/json':
-                    $json = file_get_contents('php://input');
-                    $_POST = json_decode($json, true);
-                    $datapost = $_POST;
-                    break;
-                default:
-                    $datapost = array(
-                        'sess_id' => $this->input->post('sess_id', true)
-                    );
-            }
-
-            if ($this->form_validation->run() == FALSE) {
-                $FVE = $this->form_validation->error_array();
-                $this->response([
-                    'status' => false,
-                     'status_code' => 401,
-
-                    'message' => 'Error validation',
-                    'data' => $FVE
-                ], Rest_Controller::HTTP_UNAUTHORIZED);
-            } else {
-
-                $pdata = array(
-                    'sess_id' => $this->sanitizeInput($datapost['sess_id'])
-                );
-                $validateSession = $this->modelrepo->validate_session($pdata);
-                if ($validateSession == false) {
-
-                    $AVR = false;
-                    $resp['status'] = false;
-                    $resp['status_code'] = 1001;
-                    $resp['message'] = "Session denied";
-                } else {
-
-                    $apiUserList = $this->modelrepo->api_user_list();
-
-                    $resp['status'] = true;
-                    $resp['status_code'] = 200;
-                    $resp['message'] = "Api user list";
-                    $resp['data'] = $apiUserList;
-                }
-            }
-        }
-        if ($AVR) {
-
-            $this->response($resp, Rest_Controller::HTTP_OK);
-        } else {
-
-            $this->response($resp, Rest_Controller::HTTP_UNAUTHORIZED);
-        }
-    }
 
  
 
@@ -186,27 +130,34 @@ class Payment extends REST_Controller
                     'status'        => false,
                     'status_code'   => 401,
                     'message'       => 'Error validation',
-                    'data'           => $FVE
+                    'data'          => $FVE
                 ], Rest_Controller::HTTP_UNAUTHORIZED);
             } else {
 
                 $pdata = array(
                         'amount'           => $this->sanitizeInput($datapost['amount']),
                         'reference_number' => $this->sanitizeInput($datapost['reference_number']),
-                        'acount_no'        => $this->sanitizeInput($datapost['acount_no']),
- 
+                        'acount_no'        => $this->sanitizeInput($datapost['acount_no'])
                 );
+           
+                $chk_reference_number = $this->modelrepo->chk_reference($pdata['reference_number']);
+               if($chk_reference_number)
+                {
+                    $this->response([
+                        'status'        => false,
+                        'status_code'   => 401,
+                        'message'       => 'reference_number already exist',
+                    
+                        ], Rest_Controller::HTTP_UNAUTHORIZED);
 
-            //    $chk_merchant_token = $this->modelrepo->chk_token();
+                }
 
-            //    if($chk_merchant_token == false){
-            $token =    $this->DwdApiService->generate_token();
+                $mattrix_token = $this->get_token();
+              $resp['d1'] = $mattrix_token;
 
-                // }else{
+            
 
-                // }
-
-              $resp=  $token;
+              
           
             }
         }
@@ -219,7 +170,55 @@ class Payment extends REST_Controller
         }
     }
 
+   function get_token()
+   {
+       $today = date("Y-m-d H:i:s");
+               $get_last_token=$this->modelrepo->latest_token();
+                if($get_last_token){
+                    $tobe_exp = $get_last_token['exp_date'];
+                    if( $today >= $tobe_exp){
+                             
+                              
+                    $dwd_token =    $this->DwdApiService->generate_token();
 
+                    if($dwd_token['status_code']==200){
+                        $matrix_data['access_token'] = $dwd_token['response']['access_token'];
+                        $matrix_data['token_type'] = $dwd_token['response']['token_type'];
+                        $matrix_data['created_date'] =$today;
+                        $matrix_data['exp_date'] =date("Y-m-d H:i:s", strtotime($today) + 3000);
+                        $matrix_data['expires_in'] =$dwd_token['response']['expires_in'];
+                        $this->modelrepo->insert_metrix_token($matrix_data);
+                        return $dwd_token['response']['access_token'];
+            
+    
+                    }elseif($dwd_token['status_code']>=500){
+                            $this->response([
+                            'status'        => false,
+                            'status_code'   => 500,
+                            'message'       => 'MatrixPay server issue.'
+                            ], Rest_Controller::HTTP_UNAUTHORIZED);
+
+                    }else{
+                            $this->response([
+                            'status'        => false,
+                            'status_code'   => 401,
+                            'message'       => 'error generate token'
+                            ], Rest_Controller::HTTP_UNAUTHORIZED);
+                    }
+                            return "generat new token";
+                        }else{
+                            return $get_last_token['access_token'];
+                        } 
+                    // $date = date('Y-m-d H:i:s');
+                    // $newDate = date("Y-m-d H:i:s", strtotime($date) + 3600);
+
+                    // return $get_last_token;
+
+                }
+
+
+
+   }
     
 ///////////////////////////
 
