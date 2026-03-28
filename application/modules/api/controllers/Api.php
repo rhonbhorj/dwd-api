@@ -87,8 +87,10 @@ class Api extends REST_Controller
             $resp['status'] = true;
             $resp['status_code'] = 201;
             $resp['message'] = "create";
+            
             $resp['data']['token'] = $tokenData['token'];
-            $resp['exp']=date("Y-m-d H:i:s",$tokenData['exp']);
+            $resp['data']['exp']=date("Y-m-d H:i:s",$tokenData['exp']);
+            
         }
         if ($AVR) {
 
