@@ -101,7 +101,7 @@ class Payment extends REST_Controller
         if ($chkAcess['status'] == false) {
         //    $AVR      = false;
         
-            // $this->response($chkAcess['data'], Rest_Controller::HTTP_UNAUTHORIZED);/
+            $this->response($chkAcess['data'], Rest_Controller::HTTP_UNAUTHORIZED);
         } else {
             $this->form_validation->set_rules('amount', 'amount', 'trim|required');
             $this->form_validation->set_rules('reference_number', 'reference_number', 'trim|required');
@@ -135,7 +135,7 @@ class Payment extends REST_Controller
             } else {
 
                 $pdata = array(
-                        'amount'           => $this->sanitizeInput($datapost['amount']),
+                        'amount'           => $this->sanitizeInput($datapost['amount']), 
                         'reference_number' => $this->sanitizeInput($datapost['reference_number']),
                         'acount_no'        => $this->sanitizeInput($datapost['acount_no'])
                 );
@@ -145,6 +145,7 @@ class Payment extends REST_Controller
                 if($chk_reference_number)
                 {
                     $this->response([
+
                         'status'        => false,
                         'status_code'   => 401,
                         'message'       => 'reference_number already exist',
@@ -154,12 +155,92 @@ class Payment extends REST_Controller
                 }
 
                 $mattrix_token = $this->get_token();
-                    $data_to_send["Account_No"] = $pdata['acount_no'];
+
+                $data_to_send["Account_No"] = $pdata['acount_no'];
+
                 $get_billing_query = $this->DwdApiService->billing_query_external_ap1($mattrix_token,$data_to_send);
                  
-             
+                $fee               = '20';
 
-                $resp =  $get_billing_query;
+                if( $get_billing_query['status_code'] == 200 ){
+
+                    if(date('Y-m-d') <=$get_billing_query['response']['Due_Date']){
+                        $amount_to_transact = $get_billing_query['response']['Total_Amount_Due'];
+                        
+                    }else{
+
+                        $amount_to_transact = $get_billing_query['response']['Amount_After_Due'];
+
+                    }
+
+                    if($pdata['amount'] != $amount_to_transact){
+
+                        $this->response([
+
+                        'status'        => false,
+                        'status_code'   => 401,
+                        'message'       => 'Invalid Amount to transact',
+                        'amount_to_paid' => $amount_to_transact
+                    
+                        ], Rest_Controller::HTTP_UNAUTHORIZED);
+                    }
+
+                    
+                    
+                    $request_data['reference_number']   = $pdata['reference_number'];
+                      
+                    $request_data['txn_reference']      = date('Y').$pdata['reference_number'];
+                  
+                    $request_data['dwd_reference_num']  = $get_billing_query['response']['ReferenceNum'];
+
+                    $request_data['amount']             = $pdata['amount'];
+
+                    $request_data['fee']                = $fee;
+
+                    $request_data['total_amount']       = $pdata['amount'] + $fee;
+
+                    $request_data['account_no']         = $get_billing_query['response']['Account_No'];
+
+                    $request_data['account_name']       = $get_billing_query['response']['Account_Name'];
+                  
+                    $request_data['total_amount_due']   = $get_billing_query['response']['Total_Amount_Due'];
+
+                    $request_data['amount_after_due']   = $get_billing_query['response']['Amount_After_Due'];
+
+                    $request_data['due_date']           = $get_billing_query['response']['Due_Date'];
+
+                    $request_data['billing_month']      = $get_billing_query['response']['Billing_Month'];
+                    
+                    $insert_txn = $this->modelrepo->insert_request_txn($request_data);
+
+
+
+                    // $reference_number['reference_number']   = $pdata['reference_number'];
+                    // $txn_reference['txn_reference']
+                    // $payment_ref_no['payment_ref_no']
+                    // $dwd_reference_num['dwd_reference_num']
+                    // $amount['amount']
+                    // $fee['fee']
+                    // $total_amount['total_amount']
+                    // $account_no['account_no']               = $get_billing_query['response']['Account_No']
+                    // $account_name['account_name']           = $get_billing_query['response']['Account_Name']
+                    // $payment_date['payment_date']
+                    // $vaid_via['vaid_via']
+                    // $paid_by['paid_by']
+                    // $total_amount_due['total_amount_due']   = $get_billing_query['response']['Total_Amount_Due']
+                    // $amount_after_due['amount_after_due']   = $get_billing_query['response']['Amount_After_Due']
+                    // $due_date['due_date']                   = $get_billing_query['response']['Due_Date']
+                    // $billing_month['billing_month']         = $get_billing_query['response']['Billing_Month']
+                    // $reference_num['reference_num']         = $get_billing_query['response']['ReferenceNum']
+
+                    $resp = $get_billing_query;
+
+                }else{
+
+
+                }    
+
+               
 
               
           

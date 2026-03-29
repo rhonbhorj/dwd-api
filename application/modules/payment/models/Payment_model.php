@@ -19,12 +19,7 @@ class Payment_model extends CI_Model
         }
         return $randomString;
     }
-    public function validate_user_access($data)
-    {
-        $sql = "select * from tbl_users where  user_id ='" .$data['user_id']."'";
-        $Q = $this->db->query($sql);
-        return $Q->row_array() ? $Q->row_array() : false;
-    }
+
 
     function chk_token($company_id,$token)
     {
@@ -59,6 +54,11 @@ class Payment_model extends CI_Model
     public function insert_metrix_token($data)
     {
         return $this->db->insert('merchant_token', $data);
+    }
+
+    public function insert_request_txn($data)
+    {
+        return $this->db->insert('tbl_transactions', $data);
     }
 
     
