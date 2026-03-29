@@ -233,82 +233,103 @@ class Payment extends REST_Controller
                     $postBackData       = base_url() . 'postback/?txref=' . $request_data['txn_reference'];
 
                     $jayParsedAry = [
-                                    'endpoint'               => 'p2m-generateQR',
-                                    'reference_number'       => $request_data['txn_reference'],
-                                    'return_url'             => 'https://example.com/success',
-                                    'callback_url'           => $postBackData,
-                                    'merchant_details'       => [
+                        'endpoint'               => 'p2m-generateQR',
+                        'reference_number'       => $request_data['txn_reference'],
+                        'return_url'             => 'https://example.com/success',
+                        'callback_url'           => $postBackData,
 
-                                                                'txn_amount'    => $request_data['total_amount'],
-                                                                'method'        => 'dynamic',
-                                                                'txn_type'      => 1,
-                                                                'name'          => $get_billing_query['response']['Account_Name'],
-                                                                'mobile_number' => "09123456789"
-                                                                ],
-                                    'email_confirmation'    => [
-                                                            'email'=> $pdata['email'],
-                                                            "auto"=>"off"
-                                                            ],
-                                    "other_details" => [
-                                        
-                                                [
-                                                    "item"  => "billing_month",
-                                                    "amount"=> $get_billing_query['response']['Billing_Month']
-                                                ],
-                                                [
-                                                    "item"  => "Amount",
-                                                    "amount"=> $request_data['amount']
-                                                ],
-                                                [
-                                                    "item"  => "Fee",
-                                                    "amount"=> $request_data['fee']
-                                                ]
-                                            ]
-                        ];
-                        $ngsi_resp= generate_qr_api( $jayParsedAry );
+                        'merchant_details'       => [
+                            'txn_amount'    => $request_data['total_amount'],
+                            'method'        => 'dynamic',
+                            'txn_type'      => 1,
+                            'name'          => $get_billing_query['response']['Account_Name'],
+                            'mobile_number' => $pdata["phone_number"]
 
+                        ],
+                        'email_confirmation'    =>  [
+                            'email'=> $pdata['email'],
+                            "auto"=>"off"
+                        ],
+                        "other_details" => [
+                            [
+                                "item"  => "billing_month",
+                                "amount"=> $get_billing_query['response']['Billing_Month']
+                            ],
+                            [
+                                "item"  => "Amount",
+                                "amount"=> $request_data['amount']
+                            ],
+                            [
+                                "item"  => "Fee",
+                                "amount"=> $request_data['fee']
+                            ]
+                        ]
+                    ];
+                    $ngsi_resp = generate_qr_api( $jayParsedAry );
+                    
+                    if($ngsi_resp['status_code']=="201"){
 
+                                                                  
+                        $qr =    $ngsi_resp["response"]['data']['raw_string'];
+                         $insert_txn = $this->modelrepo->insert_request_txn($request_data);
 
+                        $jresp['status'] = true;
+                        $jresp['message'] =    "Created Successfully!";
+                        $jresp['amount'] =   $pdata['amount'];
+                        $jresp['fee'] =  $request_data['fee'];
+                        $jresp['total_txn_amount'] =   $pdata['amount'] +$request_data['fee'];
+                        
+                        $jresp['reference_number'] =  $request_data['reference_number'];
+                        $jresp['txn_reference'] =  $request_data['txn_reference'];
+                        $jresp['create_at'] =  $ngsi_resp["response"]['data']['create_at'];
 
+                        
 
+         
+                        
+                        
 
+                    }elseif($ngsi_resp['status_code'] >= 500){
+                            
+                            // $updateapi= $this->modelrepo->doUpdateApilogs($update, $apiLogId);
 
+                        $err_respponse['status'] = false;
+                        $err_respponse['message'] = 'internal error';
+                        $this->response($err_respponse, Rest_Controller::HTTP_INTERNAL_SERVER_ERROR);
 
+                    }else{
 
+                        $AVR=false;
+                        $jresp['status'] = false;
+                        $jresp['message'] = $ngsi_resp['response']['message'];
 
-
-
-
-
-
-
-
+                    }
 
 
                     
-                    // $insert_txn = $this->modelrepo->insert_request_txn($request_data);
+                        // $insert_txn = $this->modelrepo->insert_request_txn($request_data);
 
 
 
-                    // $reference_number['reference_number']   = $pdata['reference_number'];
-                    // $txn_reference['txn_reference']
-                    // $payment_ref_no['payment_ref_no']
-                    // $dwd_reference_num['dwd_reference_num']
-                    // $amount['amount']
-                    // $fee['fee']
-                    // $total_amount['total_amount']
-                    // $account_no['account_no']               = $get_billing_query['response']['Account_No']
-                    // $account_name['account_name']           = $get_billing_query['response']['Account_Name']
-                    // $payment_date['payment_date']
-                    // $vaid_via['vaid_via']
-                    // $paid_by['paid_by']
-                    // $total_amount_due['total_amount_due']   = $get_billing_query['response']['Total_Amount_Due']
-                    // $amount_after_due['amount_after_due']   = $get_billing_query['response']['Amount_After_Due']
-                    // $due_date['due_date']                   = $get_billing_query['response']['Due_Date']
-                    // $billing_month['billing_month']         = $get_billing_query['response']['Billing_Month']
-                    // $reference_num['reference_num']         = $get_billing_query['response']['ReferenceNum']
+                        // $reference_number['reference_number']   = $pdata['reference_number'];
+                        // $txn_reference['txn_reference']
+                        // $payment_ref_no['payment_ref_no']
+                        // $dwd_reference_num['dwd_reference_num']
+                        // $amount['amount']
+                        // $fee['fee']
+                        // $total_amount['total_amount']
+                        // $account_no['account_no']               = $get_billing_query['response']['Account_No']
+                        // $account_name['account_name']           = $get_billing_query['response']['Account_Name']
+                        // $payment_date['payment_date']
+                        // $vaid_via['vaid_via']
+                        // $paid_by['paid_by']
+                        // $total_amount_due['total_amount_due']   = $get_billing_query['response']['Total_Amount_Due']
+                        // $amount_after_due['amount_after_due']   = $get_billing_query['response']['Amount_After_Due']
+                        // $due_date['due_date']                   = $get_billing_query['response']['Due_Date']
+                        // $billing_month['billing_month']         = $get_billing_query['response']['Billing_Month']
+                        // $reference_num['reference_num']         = $get_billing_query['response']['ReferenceNum']
 
-                    $resp = $ngsi_resp;
+                    $resp = $jresp;
 
                 }else{
 
