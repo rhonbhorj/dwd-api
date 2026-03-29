@@ -141,7 +141,8 @@ class Payment extends REST_Controller
                 );
            
                 $chk_reference_number = $this->modelrepo->chk_reference($pdata['reference_number']);
-               if($chk_reference_number)
+
+                if($chk_reference_number)
                 {
                     $this->response([
                         'status'        => false,
@@ -153,9 +154,12 @@ class Payment extends REST_Controller
                 }
 
                 $mattrix_token = $this->get_token();
-              $resp['d1'] = $mattrix_token;
+                    $data_to_send["Account_No"] = $pdata['acount_no'];
+                $get_billing_query = $this->DwdApiService->billing_query_external_ap1($mattrix_token,$data_to_send);
+                 
+             
 
-            
+                $resp =  $get_billing_query;
 
               
           
@@ -172,58 +176,63 @@ class Payment extends REST_Controller
 
    function get_token()
    {
-       $today = date("Y-m-d H:i:s");
-               $get_last_token=$this->modelrepo->latest_token();
-                if($get_last_token){
-                    $tobe_exp = $get_last_token['exp_date'];
-                    if( $today >= $tobe_exp){
-                             
-                              
-                    $dwd_token =    $this->DwdApiService->generate_token();
+        $today = date("Y-m-d H:i:s");
+        $get_last_token=$this->modelrepo->latest_token();
 
-                    if($dwd_token['status_code']==200){
-                        $matrix_data['access_token'] = $dwd_token['response']['access_token'];
-                        $matrix_data['token_type'] = $dwd_token['response']['token_type'];
-                        $matrix_data['created_date'] =$today;
-                        $matrix_data['exp_date'] =date("Y-m-d H:i:s", strtotime($today) + 3000);
-                        $matrix_data['expires_in'] =$dwd_token['response']['expires_in'];
-                        $this->modelrepo->insert_metrix_token($matrix_data);
-                        return $dwd_token['response']['access_token'];
-            
-    
-                    }elseif($dwd_token['status_code']>=500){
-                            $this->response([
-                            'status'        => false,
-                            'status_code'   => 500,
-                            'message'       => 'MatrixPay server issue.'
-                            ], Rest_Controller::HTTP_UNAUTHORIZED);
+        if($get_last_token){
 
-                    }else{
-                            $this->response([
-                            'status'        => false,
-                            'status_code'   => 401,
-                            'message'       => 'error generate token'
-                            ], Rest_Controller::HTTP_UNAUTHORIZED);
-                    }
-                            return "generat new token";
-                        }else{
-                            return $get_last_token['access_token'];
-                        } 
-                    // $date = date('Y-m-d H:i:s');
-                    // $newDate = date("Y-m-d H:i:s", strtotime($date) + 3600);
+            $tobe_exp = $get_last_token['exp_date'];
 
-                    // return $get_last_token;
-
-                }
+            if( $today >= $tobe_exp){
+                        
+                return $this->new_token();
+                    
+            }else{
+                
+                return $get_last_token['access_token'];
+            } 
 
 
+        }else{
+        
+            return $this->new_token();
+        }
 
    }
     
-///////////////////////////
+    function new_token()
+    {   $today    = date('Y-m-d H:i:s');
+        $dwd_token =    $this->DwdApiService->generate_token();
+
+        if($dwd_token['status_code']==200){
+            $matrix_data['access_token'] = $dwd_token['response']['access_token'];
+            $matrix_data['token_type'] = $dwd_token['response']['token_type'];
+            $matrix_data['created_date'] =$today;
+            $matrix_data['exp_date'] =date("Y-m-d H:i:s", strtotime($today) + 3000);
+            $matrix_data['expires_in'] =$dwd_token['response']['expires_in'];
+
+            $this->modelrepo->insert_metrix_token($matrix_data);
+
+            return $dwd_token['response']['access_token'];
+
+        }elseif($dwd_token['status_code']>=500){
+        
+            $this->response([
+            'status'        => false,
+            'status_code'   => 500,
+            'message'       => 'MatrixPay server issue.'
+            ], Rest_Controller::HTTP_UNAUTHORIZED);
+
+        }else{
+            $this->response([
+            'status'        => false,
+            'status_code'   => 401,
+            'message'       => 'error generate token'
+            ], Rest_Controller::HTTP_UNAUTHORIZED);
+        }
 
 
-
+    }
 
 
 }

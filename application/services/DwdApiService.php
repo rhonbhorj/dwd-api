@@ -43,27 +43,34 @@ class DwdApiService
       ),
     ));
 
-      $response = curl_exec( $ch );
-      $http_status_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+    $response = curl_exec( $ch );
+    $http_status_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
     
     curl_close( $ch );
     
-            // expecting to be a json encoded response
-            $resp[ 'response' ] =  json_decode( $response, true );
-          
-            $resp[ 'status_code' ] = $http_status_code;
+    // expecting to be a json encoded response
+    $resp[ 'response' ] =  json_decode( $response, true );
+  
+    $resp[ 'status_code' ] = $http_status_code;
     return $resp;
   }
 
-  public function call_external_api($data)
+  public function upload_external_ap1($generated_token,$dataToSend)
   {
-    $generated_token = $this->generate_token();
+    $endpoint= $this->dwd_endpoint_base_url."/collections/upload";
+    return $this->call_external_api($generated_token,$dataToSend,$endpoint);
+      
+  }
+    public function billing_query_external_ap1($generated_token,$dataToSend)
+  {
+    $endpoint= $this->dwd_endpoint_base_url."/billing/query";
+    return $this->call_external_api($generated_token,$dataToSend,$endpoint);
+      
+  }
 
-
-
-    $endpoint = $this->endpoint_base_url . $data['endpoint'];
-		
-    $dataToSend = $data;
+  public function call_external_api($generated_token,$dataToSend,$endpoint)
+  {
+  
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $endpoint);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -74,23 +81,20 @@ class DwdApiService
     ]);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($dataToSend, JSON_PRESERVE_ZERO_FRACTION));
-
-    $response = curl_exec($ch);
-
-    if (curl_errno($ch)) {
-        $error = curl_error($ch);
-
-        http_response_code(500);
-
-        return [
-          'status_code' => 500,
-          'error' => $error
-        ];
-    }
-    curl_close($ch);
-
+    
+    $response = curl_exec( $ch );
+    $http_status_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+    
+    curl_close( $ch );
+    
     // expecting to be a json encoded response
-    return $response;
+    $resp[ 'response' ] =  json_decode( $response, true );
+          
+    $resp[ 'status_code' ] = $http_status_code;
+
+    return $resp;
+   
+   
   }
 
 }
