@@ -84,7 +84,7 @@ class Payment extends REST_Controller
 
     private function sanitizeInput($input)
     {
-        return preg_replace("/[^a-zA-Z0-9\s_,.-]/", "", trim($input));
+        return preg_replace("/[^a-zA-Z0-9\s_,.@-]/", "", trim($input));
     }
 
  
@@ -106,6 +106,8 @@ class Payment extends REST_Controller
             $this->form_validation->set_rules('amount', 'amount', 'trim|required');
             $this->form_validation->set_rules('reference_number', 'reference_number', 'trim|required');
             $this->form_validation->set_rules('acount_no', 'acount_no', 'trim|required');
+            $this->form_validation->set_rules('phone_number', 'phone_number', 'trim|required');
+            $this->form_validation->set_rules('email', 'email', 'trim|required|valid_email');
 
             $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
 
@@ -119,7 +121,9 @@ class Payment extends REST_Controller
                     $datapost = array(
                         'amount'           => $this->input->post('amount', true),
                         'reference_number' => $this->input->post('reference_number', true),
-                        'acount_no'        => $this->input->post('acount_no', true)
+                        'acount_no'        => $this->input->post('acount_no', true),
+                        'phone_number'     => $this->input->post('phone_number', true),
+                        'email'            => $this->input->post('email', true)
 
                     );
             }
@@ -137,7 +141,9 @@ class Payment extends REST_Controller
                 $pdata = array(
                         'amount'           => $this->sanitizeInput($datapost['amount']), 
                         'reference_number' => $this->sanitizeInput($datapost['reference_number']),
-                        'acount_no'        => $this->sanitizeInput($datapost['acount_no'])
+                        'acount_no'        => $this->sanitizeInput($datapost['acount_no']),
+                        'phone_number'     => $this->sanitizeInput($datapost['phone_number']),
+                        'email'            => $this->sanitizeInput($datapost['email'])
                 );
            
                 $chk_reference_number = $this->modelrepo->chk_reference($pdata['reference_number']);
@@ -186,7 +192,18 @@ class Payment extends REST_Controller
                     }
 
                     
-                    
+
+
+
+
+
+
+
+
+
+
+
+
                     $request_data['reference_number']   = $pdata['reference_number'];
                       
                     $request_data['txn_reference']      = date('Y').$pdata['reference_number'];
@@ -210,8 +227,66 @@ class Payment extends REST_Controller
                     $request_data['due_date']           = $get_billing_query['response']['Due_Date'];
 
                     $request_data['billing_month']      = $get_billing_query['response']['Billing_Month'];
+
+
+
+                    $postBackData       = base_url() . 'postback/?txref=' . $request_data['txn_reference'];
+
+                    $jayParsedAry = [
+                                    'endpoint'               => 'p2m-generateQR',
+                                    'reference_number'       => $request_data['txn_reference'],
+                                    'return_url'             => 'https://example.com/success',
+                                    'callback_url'           => $postBackData,
+                                    'merchant_details'       => [
+
+                                                                'txn_amount'    => $request_data['total_amount'],
+                                                                'method'        => 'dynamic',
+                                                                'txn_type'      => 1,
+                                                                'name'          => $get_billing_query['response']['Account_Name'],
+                                                                'mobile_number' => "09123456789"
+                                                                ],
+                                    'email_confirmation'    => [
+                                                            'email'=> $pdata['email'],
+                                                            "auto"=>"off"
+                                                            ],
+                                    "other_details" => [
+                                        
+                                                [
+                                                    "item"  => "billing_month",
+                                                    "amount"=> $get_billing_query['response']['Billing_Month']
+                                                ],
+                                                [
+                                                    "item"  => "Amount",
+                                                    "amount"=> $request_data['amount']
+                                                ],
+                                                [
+                                                    "item"  => "Fee",
+                                                    "amount"=> $request_data['fee']
+                                                ]
+                                            ]
+                        ];
+                        $ngsi_resp= generate_qr_api( $jayParsedAry );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                     
-                    $insert_txn = $this->modelrepo->insert_request_txn($request_data);
+                    // $insert_txn = $this->modelrepo->insert_request_txn($request_data);
 
 
 
@@ -233,7 +308,7 @@ class Payment extends REST_Controller
                     // $billing_month['billing_month']         = $get_billing_query['response']['Billing_Month']
                     // $reference_num['reference_num']         = $get_billing_query['response']['ReferenceNum']
 
-                    $resp = $get_billing_query;
+                    $resp = $ngsi_resp;
 
                 }else{
 
