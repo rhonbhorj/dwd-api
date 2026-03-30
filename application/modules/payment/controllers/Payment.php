@@ -230,7 +230,7 @@ class Payment extends REST_Controller
 
                     $request_data['email']              = $pdata['email'];
 
-                    $request_data['mobile_nimber']      = $pdata['phone_number'];
+                    $request_data['mobile_number']      = $pdata['phone_number'];
 
 
 
