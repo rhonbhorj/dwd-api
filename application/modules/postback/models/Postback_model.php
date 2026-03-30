@@ -27,9 +27,9 @@ class Postback_model extends CI_Model
         return $this->db->insert_id($this->db->insert('tbl_callback', $pdata));
     }
 
-           public function chk_reference_number($refNo)
+        public function chk_reference_number($refNo)
     {
-        $sql = "select * from tbl_transaction where reference_number like ?";
+        $sql = "select * from tbl_transactions where txn_reference like ?";
         $Q = $this->db->query($sql, array(
             $refNo['reference_number']
         ));
@@ -44,46 +44,39 @@ class Postback_model extends CI_Model
     public function find_data($data)
     {
 
-    $query = $this->db
-        ->where('reference_number', $data)
-        ->get('tbl_callback');
+        $query = $this->db
+            ->where('reference_number', $data)
+            ->get('tbl_callback');
 
-    if (!$query) {
-        return false;
+        if (!$query) {
+            return false;
+        }
+
+        return $query->num_rows() > 0 ? $query->result_array() : false;
+
+
+
+        //       $query = $this->db
+        //     ->where('reference_number', $data)
+        //     ->get('tbl_callback');
+
+        // return $query->num_rows() > 0 ? $query->result_array() : false;
     }
 
-    return $query->num_rows() > 0 ? $query->result_array() : false;
+ 
 
-
-
-    //       $query = $this->db
-    //     ->where('reference_number', $data)
-    //     ->get('tbl_callback');
-
-    // return $query->num_rows() > 0 ? $query->result_array() : false;
-    }
-
-    public function get_council_list()
+        public function latest_token()
     {
-       return $this->db->get('tbl_bsp_council')->row_array(); 
-        // return $Q->row_array() ? $Q->row_array() : false;get_district_list
+        $sql = "select * from merchant_token  
+                ORDER BY m_id DESC 
+                LIMIT 1" ;
+
+        $Q   = $this->db->query($sql);
+        return $Q->row_array() ? $Q->row_array() : false;
+
     }
 
-        public function get_district_list($data)
-    {
-          return $this->db->where('coucil_code', $data)
-                        ->where('status', 'active')
-                        ->get('tbl_district')
-                        ->result(); 
-    }
 
-            public function get_sub_district_list($data)
-    {
-          return $this->db->where('district_code', $data)
-                        ->where('status', 'active')
-                        ->get('tbl_sub_district')
-                        ->result(); 
-    }
 
     public function chk_council_code($data)
     {
@@ -131,18 +124,21 @@ class Postback_model extends CI_Model
             return false;
         }
     }
-
+     public function insert_metrix_token($data)
+    {
+        return $this->db->insert('merchant_token', $data);
+    }
      public function do_apilogs($pdata)
     {
         return $this->db->insert_id($this->db->insert('api_logs', $pdata));
     }
        public function insert_payment_log($pdata)
     {
-          return $this->db->insert('tbl_transaction', $pdata);
+          return $this->db->insert('tbl_transactions', $pdata);
     }
       function do_insert($pdata)
     {
-         return $this->db->insert('tbl_transaction', $pdata);
+         return $this->db->insert('tbl_transactions', $pdata);
     }
     public function doUpdateApilogs($update, $where)
     {
@@ -151,9 +147,14 @@ class Postback_model extends CI_Model
     }
             public function update_tbl_transaction_data($update, $where)
     {
-        $this->db->where('reference_number', $where)->limit(1)->update('tbl_transaction', $update);
+        $this->db->where('txn_reference', $where)->limit(1)->update('tbl_transactions', $update);
         return $this->db->affected_rows();
 
  
+    }
+      public function update_callback($updata,$where)
+    {
+    return $this->db->where('callback_id', $where)->update('tbl_callback', $updata);
+
     }
 }

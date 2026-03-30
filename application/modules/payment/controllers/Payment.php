@@ -128,6 +128,16 @@ class Payment extends REST_Controller
                     );
             }
 
+             $ins_data['params'] = json_encode($datapost);
+
+            $ins_data['request_at'] = $today;
+
+            $ins_data['method'] = $_SERVER['REQUEST_METHOD'];
+
+            $ins_data['uri'] = $this->uri->uri_string();
+
+            $apiLogId = $this->modelrepo->do_apilogs($ins_data);
+
             if ($this->form_validation->run() == FALSE) {
                 $FVE = $this->form_validation->error_array();
                 $this->response([
@@ -192,18 +202,6 @@ class Payment extends REST_Controller
                     }
 
                     
-
-
-
-
-
-
-
-
-
-
-
-
                     $request_data['reference_number']   = $pdata['reference_number'];
                       
                     $request_data['txn_reference']      = date('Y').$pdata['reference_number'];
@@ -227,6 +225,12 @@ class Payment extends REST_Controller
                     $request_data['due_date']           = $get_billing_query['response']['Due_Date'];
 
                     $request_data['billing_month']      = $get_billing_query['response']['Billing_Month'];
+
+                    $request_data['status']             = 'CREATED';
+
+                    $request_data['email']              = $pdata['email'];
+
+                    $request_data['mobile_nimber']      = $pdata['phone_number'];
 
 
 
@@ -266,22 +270,25 @@ class Payment extends REST_Controller
                         ]
                     ];
                     $ngsi_resp = generate_qr_api( $jayParsedAry );
+
+                    $update['status']       = $ngsi_resp['status_code'];
+                    $update['response_at']  = date('Y-m-d H:i:s');
                     
-                    if($ngsi_resp['status_code']=="201"){
+                    if( $ngsi_resp['status_code'] == "201" ){
+                        $request_data['ngsi_ref_no']      = $ngsi_resp['response']['data']['txn_ref'];
 
-                                                                  
-                        $qr =    $ngsi_resp["response"]['data']['raw_string'];
-                         $insert_txn = $this->modelrepo->insert_request_txn($request_data);
+                        $insert_txn                 = $this->modelrepo->insert_request_txn($request_data);
 
-                        $jresp['status'] = true;
-                        $jresp['message'] =    "Created Successfully!";
-                        $jresp['amount'] =   $pdata['amount'];
-                        $jresp['fee'] =  $request_data['fee'];
-                        $jresp['total_txn_amount'] =   $pdata['amount'] +$request_data['fee'];
+                        $resp['status']            = true;
+                        $resp['message']           = "Created Successfully!";
+                        $resp['amount']            = $pdata['amount'];
+                        $resp['fee']               = $request_data['fee'];
+                        $resp['total_txn_amount']  = $pdata['amount'] +$request_data['fee'];
                         
-                        $jresp['reference_number'] =  $request_data['reference_number'];
-                        $jresp['txn_reference'] =  $request_data['txn_reference'];
-                        $jresp['create_at'] =  $ngsi_resp["response"]['data']['create_at'];
+                        $resp['reference_number']  = $request_data['reference_number'];
+                        $resp['txn_reference']     = $request_data['txn_reference'];
+                        $resp['create_at']         = $ngsi_resp["response"]['data']['create_at'];
+                        $resp['raw_string']        = $ngsi_resp["response"]['data']['raw_string'];
 
                         
 
@@ -290,56 +297,34 @@ class Payment extends REST_Controller
                         
 
                     }elseif($ngsi_resp['status_code'] >= 500){
-                            
-                            // $updateapi= $this->modelrepo->doUpdateApilogs($update, $apiLogId);
+                             $update['api_response'] = json_encode($ngsi_resp['response']).json_encode($get_billing_query);
+                            $updateapi= $this->modelrepo->doUpdateApilogs($update, $apiLogId);
 
                         $err_respponse['status'] = false;
                         $err_respponse['message'] = 'internal error';
                         $this->response($err_respponse, Rest_Controller::HTTP_INTERNAL_SERVER_ERROR);
 
                     }else{
+                        $update['api_response'] = json_encode($ngsi_resp['response']);
+                        $updateapi              = $this->modelrepo->doUpdateApilogs($update, $apiLogId);
 
-                        $AVR=false;
-                        $jresp['status'] = false;
-                        $jresp['message'] = $ngsi_resp['response']['message'];
+                        $AVR = false;
+                        $err_respponse['status'] = false;
+                        $err_respponse['message'] = $ngsi_resp['response']['message'];
+                         $this->response($err_respponse, Rest_Controller::HTTP_UNAUTHORIZED);
 
                     }
-
-
-                    
-                        // $insert_txn = $this->modelrepo->insert_request_txn($request_data);
-
-
-
-                        // $reference_number['reference_number']   = $pdata['reference_number'];
-                        // $txn_reference['txn_reference']
-                        // $payment_ref_no['payment_ref_no']
-                        // $dwd_reference_num['dwd_reference_num']
-                        // $amount['amount']
-                        // $fee['fee']
-                        // $total_amount['total_amount']
-                        // $account_no['account_no']               = $get_billing_query['response']['Account_No']
-                        // $account_name['account_name']           = $get_billing_query['response']['Account_Name']
-                        // $payment_date['payment_date']
-                        // $vaid_via['vaid_via']
-                        // $paid_by['paid_by']
-                        // $total_amount_due['total_amount_due']   = $get_billing_query['response']['Total_Amount_Due']
-                        // $amount_after_due['amount_after_due']   = $get_billing_query['response']['Amount_After_Due']
-                        // $due_date['due_date']                   = $get_billing_query['response']['Due_Date']
-                        // $billing_month['billing_month']         = $get_billing_query['response']['Billing_Month']
-                        // $reference_num['reference_num']         = $get_billing_query['response']['ReferenceNum']
-
-                    $resp = $jresp;
+                   
+                        $insert_txn = $this->modelrepo->insert_request_txn($request_data);
 
                 }else{
-
-
+                        $AVR=false;
+                        $resp['status'] = false;
+                        $resp['message'] = $ngsi_resp['response']['message'];
                 }    
+                $update['api_response'] = json_encode($ngsi_resp['response']).json_encode($get_billing_query);
+               $updateapi= $this->modelrepo->doUpdateApilogs($update, $apiLogId);
 
-               
-
-              
-          
             }
         }
         if ($AVR) {

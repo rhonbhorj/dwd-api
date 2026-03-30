@@ -1,6 +1,50 @@
 <?php
 
+ function get_txn_data( $data )
+ {
+     
+    // pgw/api/v1/transactions/qr-codes/generate/
+        $endpoint = $_ENV['PGW_BASE_URL']. '/transaction-status-mindoro';
+         $generated_token = generate_token();
+        $dataToSend = $data;
+        if($generated_token['status_code']==200 ||$generated_token['status_code']==201){
+            $ch = curl_init();
+            curl_setopt( $ch, CURLOPT_URL, $endpoint );
+            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+            curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+            curl_setopt( $ch, CURLOPT_HTTPHEADER, [
+                'X-API-KEY: '.$_ENV['X_API_KEY'],
+                'X-API-USERNAME: '.$_ENV['X_API_USERNAME'],
+                'X-API-PASSWORD: '.$_ENV['X_API_PASSWORD'],
+                'Authorization: Bearer '. $generated_token['response'][ 'data' ][ 'token' ],
+                'Content-Type: application/json'
+            ] );
+            curl_setopt( $ch, CURLOPT_POST, true );
+            curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $dataToSend, JSON_PRESERVE_ZERO_FRACTION ) );
+    
+            $response = curl_exec( $ch );
+            $http_status_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+    
+            curl_close( $ch );
+    
+            // expecting to be a json encoded response
+            $resp[ 'response' ] =  json_decode( $response, true );
+          
+            $resp[ 'status_code' ] = $http_status_code;
 
+
+        }else{
+
+          
+            $resp[ 'response' ]=null;
+            $resp[ 'status_code' ] = $generated_token['status_code'];
+
+        }
+      
+
+        return $resp;
+
+    }
 
 
 

@@ -60,7 +60,19 @@ class Payment_model extends CI_Model
     {
         return $this->db->insert('tbl_transactions', $data);
     }
+   
+    public function do_apilogs($pdata)
+    {
+      return $this->db->insert_id($this->db->insert('api_logs', $pdata));
 
+    }
+    public function doUpdateApilogs($update, $where)
+    {
+      $this->db->where('api_id', $where)->update('api_logs', $update);
+
+      return $this->db->affected_rows();
+
+    }
     
 
 }
