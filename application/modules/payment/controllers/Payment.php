@@ -323,7 +323,9 @@ class Payment extends REST_Controller
                   $updateapi= $this->modelrepo->doUpdateApilogs($update, $apiLogId);
                         $AVR=false;
                         $resp['status'] = false;
-                        $resp['message'] = $get_billing_query['response']['message'];
+                        $resp['message'] = "invalid request";
+                        $resp['data'] = $get_billing_query;
+
                        
 
                 }    
