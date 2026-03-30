@@ -316,14 +316,17 @@ class Payment extends REST_Controller
                     }
                    
                         $insert_txn = $this->modelrepo->insert_request_txn($request_data);
-
+                 $update['api_response'] = json_encode($ngsi_resp['response']).json_encode($get_billing_query);
+                  $updateapi= $this->modelrepo->doUpdateApilogs($update, $apiLogId);
                 }else{
+                    $update['api_response'] = json_encode($get_billing_query);
+                  $updateapi= $this->modelrepo->doUpdateApilogs($update, $apiLogId);
                         $AVR=false;
                         $resp['status'] = false;
-                        $resp['message'] = $ngsi_resp['response']['message'];
+                        $resp['message'] = "Invalid request";
                 }    
-                $update['api_response'] = json_encode($ngsi_resp['response']).json_encode($get_billing_query);
-               $updateapi= $this->modelrepo->doUpdateApilogs($update, $apiLogId);
+               
+              
 
             }
         }
