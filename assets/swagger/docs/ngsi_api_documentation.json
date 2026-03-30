@@ -183,6 +183,7 @@
                 },
                 "example": {
                   "status": true,
+                  "status_code": 201,
                   "message": "Created Successfully!",
                   "amount": "775.04",
                   "fee": "20",
