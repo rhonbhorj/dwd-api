@@ -1,3 +1,19 @@
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization,X-API-KEY, X-API-USERNAME, X-API-PASSWORD"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Respond to OPTIONS preflight requests with 200 OK
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
+
+
+
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
@@ -6,14 +22,8 @@ RewriteRule ^\.git - [F,L]
 RewriteRule ^\.vscode - [F,L]
 
 
-<Files ~ "^.*\.([Ee][Nn][Vv])">
- order allow,deny
- deny from all
- satisfy all
+<Files .env>
+    order allow,deny
+    deny from all
+    ErrorDocument 403 "404 Not Found"
 </Files>
-
-<FilesMatch "^(\.env|composer\.lock)$">
-    Order allow,deny
-    Deny from all
-    ErrorDocument 403 /index.php/error404
-</FilesMatch>

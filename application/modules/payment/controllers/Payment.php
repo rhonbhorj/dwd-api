@@ -323,8 +323,8 @@ class Payment extends REST_Controller
                   $updateapi= $this->modelrepo->doUpdateApilogs($update, $apiLogId);
                         $AVR=false;
                         $resp['status'] = false;
-                        $resp['message'] = "invalid request";
-                        $resp['data'] = $get_billing_query;
+                        $resp['message'] = "No Balance or Bill Not Yet Uploaded.";
+                       
 
                        
 

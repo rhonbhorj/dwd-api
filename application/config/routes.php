@@ -55,3 +55,4 @@ $route['404_override'] = 'api/error';
 $route['default_controller'] = 'api';
 $route['generate-token'] = 'api/generate_token';
 $route['v1/payment'] = 'payment/create_qr';
+$route['v1/api-documentation'] = 'api_documentation/redoc_api';

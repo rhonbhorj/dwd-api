@@ -1,75 +1,20 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "NEW NGSI PGW",
-    "version": "1.0.0"
+    "title": "NGSI/DWD-middleware UAT",
+    "version": "1.0.0",
+    "description": ""
   },
   "servers": [
     {
-      "url": "https://api.ngsi-pgw-uat.netglobalsolutions.net"
-    }
-  ],
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
-      }
-    }
-  },
-  "tags": [
-    {
-     
-       "name": "Generate Token"
-    },
-    {
-      "name": "Payment"
-    },
-    {
-      "name": "Transaction status"
-    },{
-      "name": "Qr raw string"
-
+      "url": "https://api.dwd-uat.netglobalsolutions.net"
     }
   ],
   "paths": {
-    "/v1/cashin": {
-      "post": {
-        "tags": [
-          "Payment"
-        ],
-        "summary": "Cashin",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "example": {
-                  "endpoint": "p2m-generateQR",
-                  "reference_number": "GDFGGTDAYq2HGKG",
-                  "return_url": "https://example.com/success",
-                  "callback_url": "https://example.com/success/postback",
-                  "merchant_details": {
-                    "txn_amount": "100",
-                    "method": "dynamic",
-                    "txn_type": "1",
-                    "name": "john",
-                    "mobile_number": "09123456782"
-                  },
-                  "email_confirmation": {
-                    "email": "your@gmail.com",
-                    "auto": "off"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+    "/generate-token": {
+      "get": {
+        "summary": "generate-token",
+         "description": "This view is for **Merchants**.\n\nIt uses **JWT** as the default authentication scheme.\n\nReturns a `token` if the user is authenticated.\n\nThe following headers are required:\n- `X-API-KEY`\n- `X-API-USERNAME`\n- `X-API-PASSWORD`\n\nTo access protected resources, set:\n\nHTTP_AUTHORIZATION: Bearer {{token}}",
         "parameters": [
           {
             "name": "X-API-KEY",
@@ -98,158 +43,206 @@
         ],
         "responses": {
           "201": {
-             "description": "Created",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string",
-                  "example": "application/json"
-                }
-              }
-            },
+            "description": "generate-token",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "exp": {
+                          "type": "string",
+                          "format": "style"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "status": true,
+                  "status_code": 201,
+                  "message": "create",
+                  "data": {
+                    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJBY2Nlc3MiOiJ0cnVlIiwiYWNjb3VudF9pZCI6IjEiLCJpYXQiOjE3NzQ4NjEzMDgsIm5iZiI6MTc3NDg2MTMwOCwiZXhwIjoxNzc0ODY0OTA4fQ.WJW5JBM_UbLfVxqUIN18wgrRhTV_sMYu5PXO33CvPZA",
+                    "exp": "2026-03-30 18:01:48"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "generate-token-failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "status": false,
+                  "status_code": 403,
+                  "message": "This API access is invalid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment": {
+      "post": {
+        "summary": "/v1/payment",
+        "parameters": [
+          {
+            "name": "X-API-KEY",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "{{X-API-KEY}}"
+          },
+          {
+            "name": "X-API-USERNAME",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "{{X-API-USERNAME}}"
+          },
+          {
+            "name": "X-API-PASSWORD",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "example": "{{X-API-PASSWORD}}"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "/v1/payment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "string"
+                    },
+                    "fee": {
+                      "type": "string",
+                      "format": "utc-millisec"
+                    },
+                    "total_txn_amount": {
+                      "type": "number"
+                    },
+                    "reference_number": {
+                      "type": "string"
+                    },
+                    "txn_reference": {
+                      "type": "string"
+                    },
+                    "create_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "raw_string": {
+                      "type": "string"
+                    }
+                  }
                 },
                 "example": {
                   "status": true,
                   "message": "Created Successfully!",
-                  "data": {
-                    "payment_type": "p2m",
-                    "method": "dynamic",
-                    "url": "https://ngsi-pgw-uat.netglobalsolutions.net/generate-qr?ref=GDFGGTDAYq12HGKGd",
-                    "raw_string": "00020101021228760011ph.ppmi.p2m0111OPDVPHM1XXX03157771480000000840416529481372566312105030015204601653036085406100.005802PH5909Netglobal6015City Of Mandalu62410010ph.allbank0523312025GDFGGTDAYq12HGKGd88310012ph.ppmi.qrph0111OPDVPHM1XXX63043269",
-                    "reference_number": "GDFGGTDAYq12HGKGd",
-                    "create_at": "2025-10-24T14:08:17.000+08:00",
-                    "txn_ref": "312025GDFGGTDAYq12HGKGd"
-                  }
+                  "amount": "775.04",
+                  "fee": "20",
+                  "total_txn_amount": 795.04,
+                  "reference_number": "11Wsds4w223",
+                  "txn_reference": "202611Wsds4w223",
+                  "create_at": "2026-03-30T17:52:56.000+08:00",
+                  "raw_string": "00020101021228760011ph.ppmi.p2m0111OPDVPHM1XXX03157771480000000840416529481372571650105030015204601653036085406795.045802PH5909Netglobal6015City Of Mandalu62390010ph.allbank0521442026202611Wsds4w22388310012ph.ppmi.qrph0111OPDVPHM1XXX63046768"
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string",
-                  "example": "application/json"
-                }
-              }
-            },
+            "description": "/v1/payment already exist",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
-                },
-                "example": {
-                  "status": false,
-                  "message": "Transaction with this client ref (GDFGGTDAY0519021) already exists."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/generate-token": {
-      "get": {
-        "tags": [
-          "Generate Token"
-        ],
-        "summary": "Generate-token",
-"description": "This view is for **Merchants**.\n\nIt uses **JWT** as the default authentication scheme.\n\nReturns a `token` if the user is authenticated.\n\nThe following headers are required:\n- `X-API-KEY`\n- `X-API-USERNAME`\n- `X-API-PASSWORD`\n\nTo access protected resources, set:\n\nHTTP_AUTHORIZATION: Bearer {{token}}",
-        "parameters": [
-          {
-            "name": "X-API-KEY",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "{{X-API-KEY}}"
-          },
-          {
-            "name": "X-API-USERNAME",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "{{X-API-USERNAME}}"
-          },
-          {
-            "name": "X-API-PASSWORD",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "{{X-API-PASSWORD}}"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string",
-                  "example": "application/json"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                },
-                "example": {
-                  "status": true,
-                  "message": "create",
-                  "data": {
-                    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJBY2Nlc3MiOiJ0cnVlIiwiYWFjY291bnRfaWQiOiIzMSIsImlhdCI6MTc2MTI4NjA1MSwibmJmIjoxNzYxMjg2MDUxLCJleHAiOjE3NjEyODk2NTF9.gzCvQblNA3_gAje7oMbkA0YOHv3sEP9IHQZddlYgJdc"
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
+                },
+                "example": {
+                  "status": false,
+                  "status_code": 401,
+                  "message": "reference_number already exist"
                 }
               }
             }
           },
-          "401": {
-            "description": "Unauthorized",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string",
-                  "example": "application/json"
-                }
-              }
-            },
+          "403": {
+            "description": "/v1/payment invalid api access",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "boolean"
+                    },
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
                 },
                 "example": {
                   "status": false,
-                  "message": "Api key is invalid"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/transaction-status": {
-      "post": {
-        "tags": [
-          "Transaction status"
-        ],
-        "summary": "transaction status",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "example": {
-                  "reference_number": "ZFP2PUMZTU44Z4JH"
+                  "status_code": 403,
+                  "message": "This API access is invalid"
                 }
               }
             }
@@ -257,190 +250,53 @@
         },
         "security": [
           {
-            "bearerAuth": []
+            "BearerAuth": []
           }
         ],
-        "parameters": [
-          {
-            "name": "X-API-KEY",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "{{X-API-KEY}}"
-          },
-          {
-            "name": "X-API-USERNAME",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "{{X-API-USERNAME}}"
-          },
-          {
-            "name": "X-API-PASSWORD",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "{{X-API-PASSWORD}}"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string",
-                  "example": "application/json"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                },
-                "example": {
-                  "status": true,
-                  "data": {
-                    "status": "SUCCESS",
-                    "transaction_type": "cashin",
-                    "amount": "100",
-                    "reference_number": "ZFP2PUMZTU44Z4JH",
-                    "transaction_Reference": "292025ZFP2PUMZTU44Z4JH",
-                    "date_quested": "2025-10-07 11:53:13",
-                    "date_modified": "2025-10-07 12:51:30"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string",
-                  "example": "application/json"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                },
-                "example": {
-                  "status": false,
-                  "message": "No data found"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-      "/qr-raw": {
-      "post": {  
-         "tags": [
-          "Qr raw string"
-        ],
-        "summary": "raw string",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "example": {
-                  "reference_number": "112144433"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-API-KEY",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "{{X-API-KEY}}"
-          },
-          {
-            "name": "X-API-USERNAME",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-             "example": "{{X-API-USERNAME}}"
-          },
-          {
-            "name": "X-API-PASSWORD",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "{{X-API-PASSWORD}}"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string",
-                  "example": "application/json"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                },
-                "example": {
-                  "status": true,
-                  "message": "raw string",
-                  "data": {
-                    "qr_raw": "00020101021228760011ph.ppmi.p2m0111OPDVPHM1XXX0315777148000000142041632948138731243230503001520460165303608540813480.365802PH5904PCAB6013City Of Pasig62430010ph.allbank05252202530212-668413e667367d88310012ph.ppmi.qrph0111OPDVPHM1XXX630463B8"
+                "properties": {
+                  "amount": {
+                    "type": "string"
+                  },
+                  "reference_number": {
+                    "type": "string"
+                  },
+                  "acount_no": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "phone_number": {
+                    "type": "string",
+                    "format": "utc-millisec"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
                   }
                 }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "headers": {
-              "Content-Type": {
-                "schema": {
-                  "type": "string",
-                  "example": "application/json"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                },
-                "example": {
-                  "status": false,
-                  "message": "your transaction is already SUCCESS",
-                  "data": []
-                }
+              },
+              "example": {
+                "amount": "775.04",
+                "reference_number": "11Wsds4w223",
+                "acount_no": "103501992811",
+                "phone_number": "09123456789",
+                "email": "test@gmail.com"
               }
             }
           }
         }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }
