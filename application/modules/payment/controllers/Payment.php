@@ -280,6 +280,7 @@ class Payment extends REST_Controller
                         $insert_txn                 = $this->modelrepo->insert_request_txn($request_data);
 
                         $resp['status']            = true;
+                        $resp['status_code']       = 201;
                         $resp['message']           = "Created Successfully!";
                         $resp['amount']            = $pdata['amount'];
                         $resp['fee']               = $request_data['fee'];
