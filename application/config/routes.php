@@ -56,3 +56,7 @@ $route['default_controller'] = 'api';
 $route['generate-token'] = 'api/generate_token';
 $route['v1/payment'] = 'payment/create_qr';
 $route['v1/api-documentation'] = 'api_documentation/redoc_api';
+
+$route['webhook/allbank/instapay'] = 'allbank/instapay';
+$route['webhook/allbank/pesonet'] = 'allbank/pesonet';
+$route['webhook/allbank/p2m'] = 'allbank/p2m';
