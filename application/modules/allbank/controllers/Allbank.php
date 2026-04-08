@@ -16,13 +16,7 @@ class Allbank extends REST_Controller
         parent::__construct();
         date_default_timezone_set('Asia/Manila');
         $this->load->model('Postback_model', 'modelrepo');
-         $this->load->helper('matrix');
-         
-      
-      
-        $this->DwdApiService = new DwdApiService();
 
-        $this->authorization_token = new Authorization_Token();
     }
 
     public function token_get()
