@@ -16,6 +16,7 @@ class Allbank extends REST_Controller
         parent::__construct();
         date_default_timezone_set('Asia/Manila');
         $this->load->model('Postback_model', 'modelrepo');
+        $this->load->helper('allbank_helper');
 
     }
 
@@ -56,6 +57,12 @@ class Allbank extends REST_Controller
         $this->response($data, Rest_Controller::HTTP_FORBIDDEN);
     }
     
-    
+    public function payment_get()
+    {
+
+
+    	$response = allbank_cashin();
+        $this->response($response, Rest_Controller::HTTP_FORBIDDEN);
+    }
 
 }
