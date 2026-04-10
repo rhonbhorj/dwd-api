@@ -54,18 +54,36 @@ class Allbank extends REST_Controller
         public function pesonet_post()
     {   
 
-        $data['status'] = false;
-        $data['message'] = 'pesonet';
-        $this->response($data, Rest_Controller::HTTP_FORBIDDEN);
+       $encData = json_encode($pData);
+        $response['callback_data'] = json_decode($encData, true).$this->uri->uri_string();
+        $c_log= $this->modelrepo->callback_logs($response);
+        
+        $dateToday = date('Y-m-d\TH:i:s.vP');
+
+        $resp['payment_channel'] = 'AllBank';
+        $resp['payment_datetime'] = $dateToday;
+        $resp['status'] = 'Successful';
+        $resp['message'] = 'Payment Received';
+      
+        $this->response($resp, Rest_Controller::HTTP_OK);
     }
 
 
-            public function p2n_post()
+            public function p2m_post()
     {   
 
-        $data['status'] = false;
-        $data['message'] = 'p2m';
-        $this->response($data, Rest_Controller::HTTP_FORBIDDEN);
+        $encData = json_encode($pData);
+        $response['callback_data'] = json_decode($encData, true).$this->uri->uri_string();
+        $c_log= $this->modelrepo->callback_logs($response);
+        
+        $dateToday = date('Y-m-d\TH:i:s.vP');
+
+        $resp['payment_channel'] = 'AllBank';
+        $resp['payment_datetime'] = $dateToday;
+        $resp['status'] = 'Successful';
+        $resp['message'] = 'Payment Received';
+      
+        $this->response($resp, Rest_Controller::HTTP_OK);;
     }
 
 
