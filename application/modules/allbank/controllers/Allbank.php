@@ -53,6 +53,7 @@ class Allbank extends REST_Controller
     }
         public function pesonet_post()
     {   
+        $pData = file_get_contents('php://input');
 
        $encData = json_encode($pData);
         $response['callback_data'] = json_decode($encData, true).$this->uri->uri_string();
@@ -71,6 +72,7 @@ class Allbank extends REST_Controller
 
             public function p2m_post()
     {   
+        $pData = file_get_contents('php://input');
 
         $encData = json_encode($pData);
         $response['callback_data'] = json_decode($encData, true).$this->uri->uri_string();
