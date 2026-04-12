@@ -11,15 +11,27 @@ require_once( APPPATH . 'services/DwdApiService.php' );
 class Allbank extends REST_Controller
 {
 
-    function __construct()
-    {
-        parent::__construct();
-        date_default_timezone_set('Asia/Manila');
-        $this->load->model('Allbank_model', 'modelrepo');
-        $this->load->helper('allbank_helper');
-        $this->output->set_header('Server: ');
+function __construct()
+{
+    parent::__construct();
 
-    }
+    date_default_timezone_set('Asia/Manila');
+
+    $this->load->model('Allbank_model', 'modelrepo');
+    $this->load->helper('allbank_helper');
+
+    // Remove X-Powered-By
+    header_remove('X-Powered-By');
+
+    // CSP
+    $this->output->set_header(
+        "Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none';"
+    );
+
+    // Other headers
+    $this->output->set_header("X-Content-Type-Options: nosniff");
+    $this->output->set_header("X-Frame-Options: DENY");
+}
 
     public function token_get()
     {
